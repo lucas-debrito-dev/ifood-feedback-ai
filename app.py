@@ -96,17 +96,26 @@ def analisar_sentimento(comentario):
 
     # EXPRESSÕES POSITIVAS
     expressoes_positivas = [
-        "muito bom",
-        "muito boa",
-        "excelente atendimento",
-        "adorei o atendimento",
-        "super recomendo",
         "entrega rápida",
-        "entrega rapida"
+        "entrega rapida",
+        "comida excelente",
+        "muito bom",
+        "excelente atendimento",
+        "adorei a experiência",
+        "comida saborosa",
+        "entrega dentro do prazo",
+        "tudo perfeito",
+        "super recomendo"
     ]
 
     # EXPRESSÕES NEGATIVAS
     expressoes_negativas = [
+        "pedido chegou atrasado",
+        "comida chegou fria",
+        "comida fria",
+        "pedido veio errado",
+        "demora excessiva",
+        "atendimento poderia melhorar",
         "não gostei",
         "nao gostei",
         "não recomendo",
@@ -114,15 +123,30 @@ def analisar_sentimento(comentario):
         "muito ruim",
         "péssimo atendimento",
         "pessimo atendimento",
-        "pedido atrasado",
         "produto estragado"
     ]
+
+    positivas = 0
+    negativas = 0
+
+    # Identifica expressões positivas sem contar palavras repetidas
+    for expressao in expressoes_positivas:
+        if expressao in texto:
+            positivas += 1
+            texto = texto.replace(expressao, "", 1)
+
+    # Identifica expressões negativas
+    for expressao in expressoes_negativas:
+        if expressao in texto:
+            negativas += 1
+            texto = texto.replace(expressao, "", 1)
 
     # PALAVRAS POSITIVAS
     palavras_positivas = [
         "adorei", "ótimo", "otimo", "excelente",
         "bom", "boa", "rápido", "rapido",
-        "satisfeito", "gostei"
+        "satisfeito", "gostei", "perfeito",
+        "saborosa", "recomendo"
     ]
 
     # PALAVRAS NEGATIVAS
@@ -130,18 +154,9 @@ def analisar_sentimento(comentario):
         "ruim", "péssimo", "pessimo", "atrasado",
         "demora", "problema", "problemas",
         "reclamação", "reclamacao", "insatisfeito",
-        "defeito", "horrível", "horrivel"
+        "defeito", "horrível", "horrivel",
+        "fria", "errado"
     ]
-
-    positivas = sum(
-        expressao in texto
-        for expressao in expressoes_positivas
-    )
-
-    negativas = sum(
-        expressao in texto
-        for expressao in expressoes_negativas
-    )
 
     positivas += sum(
         palavra in texto
@@ -153,26 +168,14 @@ def analisar_sentimento(comentario):
         for palavra in palavras_negativas
     )
 
-    # TRATAMENTO DE NEGAÇÕES
-    if "não gostei" in texto or "nao gostei" in texto:
-        positivas = max(0, positivas - 1)
-        negativas = max(1, negativas)
-
-    if "não recomendo" in texto or "nao recomendo" in texto:
-        negativas = max(1, negativas)
-
     if positivas > negativas:
         return "Positivo"
     elif negativas > positivas:
         return "Negativo"
     else:
         return "Neutro"
+df["Sentimento automático"] = df["Comentário"].apply(analisar_sentimento)
 
-
-
-df["Sentimento automático"] = (
-    df["Comentário"].apply(analisar_sentimento)
-)
 
 
 # CABEÇALHO
@@ -189,16 +192,22 @@ st.divider()
 # FILTROS
 st.sidebar.header("Filtros")
 
+sentimentos_disponiveis = sorted(df["Sentimento"].dropna().unique())
+
+categorias_disponiveis = sorted(df["Categoria"].dropna().unique())
+
 sentimentos = st.sidebar.multiselect(
     "Filtrar sentimentos",
-    options=df["Sentimento"].unique(),
-    default=df["Sentimento"].unique()
+    options=sentimentos_disponiveis,
+    default=sentimentos_disponiveis,
+    key="filtro_sentimentos"
 )
 
 categorias = st.sidebar.multiselect(
     "Filtrar categorias",
-    options=df["Categoria"].unique(),
-    default=df["Categoria"].unique()
+    options=categorias_disponiveis,
+    default=categorias_disponiveis,
+    key="filtro_categorias"
 )
 
 df_filtrado = df[
@@ -260,7 +269,7 @@ st.dataframe(
             "Sentimento automático"
         ]
     ],
-    use_container_width=True,
+    width="stretch",
     hide_index=True
 )
 
@@ -346,7 +355,7 @@ with grafico1:
 
     st.plotly_chart(
         fig_sentimentos,
-        use_container_width=True
+        width="stretch"
     )
 
 with grafico2:
@@ -367,7 +376,7 @@ with grafico2:
 
     st.plotly_chart(
         fig_categorias,
-        use_container_width=True
+        width="stretch"
     )
 
 st.divider()
@@ -377,7 +386,7 @@ st.subheader("Avaliações dos clientes")
 
 st.dataframe(
     df_filtrado,
-    use_container_width=True,
+    width="stretch",
     hide_index=True
 )
 
