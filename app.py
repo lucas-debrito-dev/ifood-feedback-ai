@@ -303,7 +303,9 @@ st.divider()
 st.subheader("Recomendações para o negócio")
 
 negativas_por_categoria = (
-    df[df["Sentimento automático"] == "Negativo"]
+    df_filtrado[
+        df_filtrado["Sentimento automático"] == "Negativo"
+    ]
     .groupby("Categoria")
     .size()
     .sort_values(ascending=False)
